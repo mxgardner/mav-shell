@@ -13,6 +13,36 @@ int compare_strings(const void *a, const void *b) {
     return strcmp(*(const char **)a, *(const char **)b);
 }
 
+// function to get user input
+int get_user_input(char *input_command) {
+    // reads user input from stdin then stores it in input_command
+    if (fgets(input_command, MAX_INPUT, stdin) == NULL) { 
+        printf("Error reading input.\n"); // if fgets fails, print error message
+        return 1;
+    }
+    input_command[strcspn(input_command, "\n")] = 0;    // remove the trailing newline character
+    return 0;
+}
+
+// function to validate user command
+int validate_command(const char *input_command, const char *valid_commands[], int num_commands) {
+    if (strcmp(input_command, "quit") == 0) {
+        return 0; // signals to exit the program by setting programOnOff to 0
+    }
+
+    // perform a binary search to find the input_command in the valid_commands array
+    const char *search_key = input_command;
+    const char **found = (const char **)bsearch(&search_key, valid_commands, num_commands, sizeof(char *), compare_strings);
+    
+    // if command is found, print a success message
+    if (found != NULL) {
+        printf("Command '%s' is valid.\n", input_command);
+    } else {
+        printf("Command not found.\n");
+    }
+    return 1; // continue program execution by keeping programOnOff as 1
+}
+
 int main(int argc, char *argv[]) {
 
     // track if program is on or off
@@ -31,31 +61,16 @@ int main(int argc, char *argv[]) {
     // loop until user enters quit command
     while(programOnOff) {
 
-        // get user input
+        // declare input_command 
         char input_command[MAX_INPUT];
-        if (fgets(input_command, MAX_INPUT, stdin) == NULL) {
-            printf("Error reading input.\n");
-            return 1;
-        }
 
-        // Remove the trailing newline character if present
-        input_command[strcspn(input_command, "\n")] = 0;
+        // get user input and store it in input_command
+        get_user_input(input_command);
 
-        // validate user's command
-        if (strcmp(input_command, "quit") == 0) { // if user enters 'quit', end the program
-            programOnOff = 0; // terminate program by breaking while loop
-        } else { // else, search for the user's command in the valid commands list
-            const char *search_key = input_command;
-            const char **found = (const char **)bsearch(&search_key, valid_commands, num_commands, sizeof(char *), compare_strings);
+        // validate user input by comparing it to the list of valid commands
+        // if input_command is "quit", programOnOff is set to 0 and the program exits
+        programOnOff = validate_command(input_command, valid_commands, num_commands);
 
-            if (found != NULL) {
-                // if command is found, print a success message
-                printf("Command '%s' is valid.\n", input_command);
-            } else {
-                // if command is not found, print an error message
-                printf("Command not found.\n");
-            }
-        }
     }
     return 0;
 }
