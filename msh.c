@@ -15,62 +15,53 @@ int compare_strings(const void *a, const void *b) {
 
 // function to get user input
 int get_user_input(char *input_command) {
-    // reads user input from stdin then stores it in input_command
-    if (fgets(input_command, MAX_INPUT, stdin) == NULL) { 
-        printf("Error reading input.\n"); // if fgets fails, print error message
+    printf(" msh> ");
+    if (fgets(input_command, MAX_INPUT, stdin) == NULL) {
+        printf(" Error reading input.\n");
         return 1;
     }
-    input_command[strcspn(input_command, "\n")] = 0;    // remove the trailing newline character
+    input_command[strcspn(input_command, "\n")] = 0;
     return 0;
 }
 
 // function to validate user command
-int validate_command(const char *input_command, const char *valid_commands[], int num_commands) {
-    if (strcmp(input_command, "quit") == 0) {
-        return 0; // signals to exit the program by setting programOnOff to 0
-    }
-
-    // perform a binary search to find the input_command in the valid_commands array
+void validate_command(const char *input_command, const char *valid_commands[], int num_commands) {
     const char *search_key = input_command;
-    const char **found = (const char **)bsearch(&search_key, valid_commands, num_commands, sizeof(char *), compare_strings);
+    const char **found = (const char **)bsearch(&search_key, valid_commands, num_commands, sizeof(char *), compare_strings); 
     
-    // if command is found, print a success message
     if (found != NULL) {
-        printf("Command '%s' is valid.\n", input_command);
+        printf(" Command '%s' is valid.\n", input_command);
     } else {
-        printf("Command not found.\n");
+        printf(" Command not found.\n");
     }
-    return 1; // continue program execution by keeping programOnOff as 1
 }
 
 int main(int argc, char *argv[]) {
+    char input_command[MAX_INPUT]; // buffer to hold user input
 
-    // track if program is on or off
-    int programOnOff = 1;
-
-    //prompt user for input
-    printf("\n msh> ");
-
-    // list of acceptable commands 
-    const char *valid_commands[] = {"ls"};
+    // list acceptable commands 
+    const char *valid_commands[] = {"ls", "pwd", "quit", "exit", "q"};
     int num_commands = sizeof(valid_commands) / sizeof(valid_commands[0]);
 
     // quick sort the valid commands to be able to run a binary search
     qsort(valid_commands, num_commands, sizeof(char *), compare_strings);
 
-    // loop until user enters quit command
-    while(programOnOff) {
+    // loop until user enters a quit command
+    while(1) {
+        // get user input and validate it by searching the list of valid commands
+        get_user_input(input_command); // get user input
+        validate_command(input_command, valid_commands, num_commands); // validate user input bv using bsearch
 
-        // declare input_command 
-        char input_command[MAX_INPUT];
-
-        // get user input and store it in input_command
-        get_user_input(input_command);
-
-        // validate user input by comparing it to the list of valid commands
-        // if input_command is "quit", programOnOff is set to 0 and the program exits
-        programOnOff = validate_command(input_command, valid_commands, num_commands);
-
+        // use string comparison to check what command was entered and run it
+        // if the command is quit, exit, or q, break the loop
+        if (strcmp(input_command, "quit") == 0 || strcmp(input_command, "exit") == 0 || strcmp(input_command, "q") == 0) {
+            printf(" Exiting program. \n");
+            break;
+        } else if (strcmp(input_command, "ls") == 0) { // if the command is ls, run the ls command
+            printf(" ls command executed. \n");
+        } else if (strcmp(input_command, "pwd") == 0) {
+            printf(" pwd command executed. \n");
+        }
     }
     return 0;
 }
