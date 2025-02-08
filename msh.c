@@ -7,13 +7,22 @@
 // complied with gcc -o msh msh.c
 
 #define MAX_INPUT 100 // maximum input size
+#define MAX_PARAMS 10 // maximum additional command-line parameters
+
+// store list acceptable commands globally
+const char *valid_commands[] = {"ls", "pwd", "quit", "exit", "q"};
+int num_commands = sizeof(valid_commands) / sizeof(valid_commands[0]);
 
 // function to compare two strings
+// params: a - first string, b - second string
+// return: 0 if equal, non-zero otherwise
 int compare_strings(const void *a, const void *b) {
     return strcmp(*(const char **)a, *(const char **)b);
 }
 
-// function to get user input
+// function to get user input 
+// params: input_command - the buffer to store user input
+// return: 0 on success, 1 on error
 int get_user_input(char *input_command) {
     printf(" msh> ");
     if (fgets(input_command, MAX_INPUT, stdin) == NULL) {
@@ -24,7 +33,11 @@ int get_user_input(char *input_command) {
     return 0;
 }
 
-// function to validate user command
+// function to validate user command 
+// params: input_command - the command to validate
+// valid_commands - list of valid commands
+// num_commands - number of valid commands
+// return: void
 void validate_command(const char *input_command, const char *valid_commands[], int num_commands) {
     const char *search_key = input_command;
     const char **found = (const char **)bsearch(&search_key, valid_commands, num_commands, sizeof(char *), compare_strings); 
@@ -37,17 +50,22 @@ void validate_command(const char *input_command, const char *valid_commands[], i
 }
 
 int main(int argc, char *argv[]) {
-    char input_command[MAX_INPUT]; // buffer to hold user input
-
-    // list acceptable commands 
-    const char *valid_commands[] = {"ls", "pwd", "quit", "exit", "q"};
-    int num_commands = sizeof(valid_commands) / sizeof(valid_commands[0]);
-
     // quick sort the valid commands to be able to run a binary search
     qsort(valid_commands, num_commands, sizeof(char *), compare_strings);
 
-    // loop until user enters a quit command
-    while(1) {
+    // if command-line arguments are provided, validate them
+    if (argc > 1) {
+        if (argc - 1 > MAX_PARAMS) {
+            printf(" Error: Too many parameters. Max allowed is %d.\n", MAX_PARAMS);
+            return 1;
+        }
+        validate_command(argv[1], valid_commands, num_commands);
+        return 0;
+    }
+
+    // interactive loop to get user input
+    char input_command[MAX_INPUT]; // buffer to hold user input
+    while(1) { // loop until user enters a quit command
         // get user input and validate it by searching the list of valid commands
         get_user_input(input_command); // get user input
         validate_command(input_command, valid_commands, num_commands); // validate user input bv using bsearch
@@ -65,3 +83,5 @@ int main(int argc, char *argv[]) {
     }
     return 0;
 }
+
+// execvp 
