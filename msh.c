@@ -38,6 +38,17 @@ void change_directory(char *path) {
     }
 }
 
+// function to print current working directory
+// return: void
+void print_working_directory() {
+    char cwd[1024]; // buffer to hold current working directory
+    if (getcwd(cwd, sizeof(cwd)) != NULL) { // use getcwd to get current working directory
+        printf("Current Directory: %s\n", cwd); // print current working directory
+    } else {
+        perror(" getcwd failed"); // error handling for getcwd failure
+    }
+}
+
 // Function to execute user commands
 // params: input_command - the command to execute
 // return: void
@@ -65,6 +76,12 @@ void execute_command(char *input_command) {
     // if the command is "cd", change directory
     if (strcmp(args[0], "cd") == 0) { 
         change_directory(args[1]);
+        return;
+    }
+
+    // if the command is "pwd", print current working directory
+    if (strcmp(args[0], "pwd") == 0) {
+        print_working_directory();
         return;
     }
     
