@@ -25,7 +25,22 @@ int get_user_input(char *input_command) {
     return 0;
 }
 
+// function to change directory
+// params: path - the directory to change to
+// return: void
+void change_directory(char *path) {
+    if (path == NULL) { // if no path is provided, print usage message
+        printf(" Usage: cd <directory>\n"); 
+        return;
+    }
+    if (chdir(path) != 0) { // use chdir to change directory, return error message on failure
+        perror(" cd failed"); // error handling for chdir failure
+    }
+}
+
 // Function to execute user commands
+// params: input_command - the command to execute
+// return: void
 void execute_command(char *input_command) {
     char *args[MAX_INPUT / 2 + 1]; // array to hold command-line arguments (to be tokenized) (MAX_INPUT/2 is a rough estimate of the maximum number of arguments) (+1 for null terminator)
     int i = 0;
@@ -45,6 +60,12 @@ void execute_command(char *input_command) {
     if (strcmp(args[0], "quit") == 0 || strcmp(args[0], "exit") == 0 || strcmp(args[0], "q") == 0) {
         printf(" Exiting program. \n");
         exit(0); // exit the program by calling exit(0)
+    }
+
+    // if the command is "cd", change directory
+    if (strcmp(args[0], "cd") == 0) { 
+        change_directory(args[1]);
+        return;
     }
     
     // fork a child process to execute the command
@@ -80,4 +101,3 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-// execvp 
