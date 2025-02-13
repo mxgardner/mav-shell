@@ -10,8 +10,12 @@
 // made by Mariah Gardner 1001576678
 // complied with gcc -o msh msh.c
 
-#define MAX_INPUT 100 // maximum input size
+#define MAX_INPUT 100 // maximum command input length
 #define MAX_PARAMS 10 // maximum additional command-line parameters
+#define MAX_HISTORY 15 // maximum number of commands to store in history
+
+pid_t pid_history[MAX_HISTORY]; // array to hold process IDs of executed commands
+int history_count = 0; // counter for number of commands executed
 
 // function to get user input 
 // params: input_command - the buffer to store user input
@@ -71,6 +75,17 @@ void list_files() {
     closedir(dir);
 }
 
+// function to print process ID history
+// return: void
+void print_pid_history() {
+    printf("Last %d process IDs:\n", (history_count < MAX_HISTORY) ? history_count : MAX_HISTORY); // print number of process IDs stored in history
+    for (int i = 0; i < history_count; i++) { // loop through process ID history
+         // print each process ID stored in the array
+         // if there are more than MAX_HISTORY process IDs, only print the most recent MAX_HISTORY
+        printf("%d\n", pid_history[i]); // print each process ID
+    }
+}
+
 // Function to execute user commands
 // params: input_command - the command to execute
 // return: void
@@ -120,6 +135,12 @@ void execute_command(char *input_command) {
         printf("\033[H\033[J"); // ANSI escape codes to clear the screen
         return;
     }
+
+    // if the command is "pidhistory", print process ID history
+    if (strcmp(args[0], "pidhistory") == 0) {
+        print_pid_history();
+        return;
+    }
     
     // fork a child process to execute the command
     pid_t pid = fork();
@@ -131,7 +152,16 @@ void execute_command(char *input_command) {
         perror(" Command execution failed"); // error handling for exec failure
         exit(1); // terminate child process on exec failure
     } else {
-        wait(NULL); // wait for child process to finish
+        if (history_count < MAX_HISTORY) { // if there is space in the history array
+            pid_history[history_count++] = pid; // store process ID in history array
+        } else {
+            for (int j = 1; j < MAX_HISTORY; j++) { // if there is no space in the history array, shift all elements to the left
+                 // to make space for the new process ID
+                pid_history[j - 1] = pid_history[j];
+            }
+            pid_history[MAX_HISTORY - 1] = pid; // store new process ID in last position
+        }
+        wait(NULL); // wait for child process to terminate
     }
 }
 
