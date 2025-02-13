@@ -16,6 +16,8 @@
 
 pid_t pid_history[MAX_HISTORY]; // array to hold process IDs of executed commands
 int history_count = 0; // counter for number of commands executed
+char command_history[MAX_HISTORY][MAX_INPUT]; // array to hold command history
+int command_count = 0; // counter for number of commands in history
 
 // function to get user input 
 // params: input_command - the buffer to store user input
@@ -86,10 +88,42 @@ void print_pid_history() {
     }
 }
 
+// function to print command history
+// return: void
+void print_command_history() {
+    for (int i = 0; i < command_count; i++) {
+        printf("%d %s\n", i + 1, command_history[i]); // print each command in history with its index, add 1 to index to start from 1 instead of 0
+    }
+}
+
 // Function to execute user commands
 // params: input_command - the command to execute
 // return: void
 void execute_command(char *input_command) {
+
+    // store command in history
+     if (command_count < MAX_HISTORY) { // if there is space in the history array
+        strcpy(command_history[command_count++], input_command); // store command in history array
+    } else {
+        for (int j = 1; j < MAX_HISTORY; j++) { // if there is no space in the history array, shift all elements to the left to make space for the new command
+            strcpy(command_history[j - 1], command_history[j]);
+        }
+        strcpy(command_history[MAX_HISTORY - 1], input_command); // store new command in last position
+    }
+    
+    if (input_command[0] == '!' && strlen(input_command) > 1) { // if the command starts with '!', it is a history command
+        int index = atoi(&input_command[1]); // convert the string to an integer
+         // if the index is valid, copy the command from history to input_command
+         // and re-execute it
+        if (index >= 0 && index < command_count) {  // check if index is valid
+            strcpy(input_command, command_history[index]); // copy command from history to input_command
+            printf("Re-executing: %s\n", input_command);
+        } else {
+            printf("Command not in history.\n"); // if the index is invalid, print error message
+            return;
+        }
+    }
+
     char *args[MAX_INPUT / 2 + 1]; // array to hold command-line arguments (to be tokenized) (MAX_INPUT/2 is a rough estimate of the maximum number of arguments) (+1 for null terminator)
     int i = 0;
     char *token = strtok(input_command, " "); // tokenize input_command by spaces
@@ -139,6 +173,12 @@ void execute_command(char *input_command) {
     // if the command is "pidhistory", print process ID history
     if (strcmp(args[0], "pidhistory") == 0) {
         print_pid_history();
+        return;
+    }
+
+    // if the command is "history", print command history
+    if (strcmp(args[0], "history") == 0) {
+        print_command_history();
         return;
     }
     
