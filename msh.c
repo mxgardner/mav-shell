@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <dirent.h>
 
 // msh - maverick shell program
 // made by Mariah Gardner 1001576678
@@ -28,18 +29,20 @@ int get_user_input(char *input_command) {
 // function to change directory
 // params: path - the directory to change to
 // return: void
+// if executed in a child process, would change the directory within the child but not affect the parent shell
 void change_directory(char *path) {
     if (path == NULL) { // if no path is provided, print usage message
         printf(" Usage: cd <directory>\n"); 
         return;
     }
-    if (chdir(path) != 0) { // use chdir to change directory, return error message on failure
-        perror(" cd failed"); // error handling for chdir failure
+    if (chdir(path) != 0) { // use chdir to change directory 
+        perror(" cd failed"); // return error message
     }
 }
 
 // function to print current working directory
 // return: void
+// if executed in a child process, would print the directory within the child but not affect the parent shell
 void print_working_directory() {
     char cwd[1024]; // buffer to hold current working directory
     if (getcwd(cwd, sizeof(cwd)) != NULL) { // use getcwd to get current working directory
@@ -47,6 +50,25 @@ void print_working_directory() {
     } else {
         perror(" getcwd failed"); // error handling for getcwd failure
     }
+}
+
+// function to list files in current directory
+// return: void
+// if executed in a child process, would list the files within the child but not affect the parent shell
+void list_files() {
+    DIR *dir; // struct to hold directory stream, defined in dirent.h
+    struct dirent *entry; // struct to hold directory entries, defined in dirent.h
+    // use opendir() from dirent.h to open current directory
+    if ((dir = opendir(".")) == NULL) { // "." means current directory, if current directory cannot be opened, return error message
+        perror(" opendir failed"); // e.g. dont have permissions to open directory
+        return;
+    }
+    while ((entry = readdir(dir)) != NULL) { // use readdir to read directory entries, similar to read() in stdio.h, prints all files in current directory into the buffer
+         // readdir returns NULL when there are no more entries to read
+        printf("%s  ", entry->d_name); // print each file name from the buffer
+    }
+    printf("\n"); // print newline after listing files
+    closedir(dir);
 }
 
 // Function to execute user commands
@@ -73,6 +95,7 @@ void execute_command(char *input_command) {
         exit(0); // exit the program by calling exit(0)
     }
 
+    // handle some common commands without forking a new process 
     // if the command is "cd", change directory
     if (strcmp(args[0], "cd") == 0) { 
         change_directory(args[1]);
@@ -82,6 +105,19 @@ void execute_command(char *input_command) {
     // if the command is "pwd", print current working directory
     if (strcmp(args[0], "pwd") == 0) {
         print_working_directory();
+        return;
+    }
+
+    // if the command is "ls", list files in current directory
+    if (strcmp(args[0], "ls") == 0) {
+        list_files();
+        return;
+    }
+
+    // if the command is "clear", clear the screen
+    // simple command that does not require a new process
+    if (strcmp(args[0], "clear") == 0) {
+        printf("\033[H\033[J"); // ANSI escape codes to clear the screen
         return;
     }
     
